@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>James W.G.A.I.L - White Goods Repair Lookup</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: linear-gradient(to bottom, #f8f9fa, #e9ecef); color: #333; }
+        header { text-align: center; background: #007bff; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        h1 { margin: 0; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px; }
+        button { padding: 12px 24px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background: #218838; }
+        #results { min-height: 200px; }
+        .result { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-left: 5px solid #007bff; }
+        .result h4 { margin: 0 0 15px; color: #007bff; font-size: 1.4em; }
+        .link-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        a { display: block; padding: 10px; background: #f8f9fa; border-radius: 5px; color: #28a745; text-decoration: none; font-weight: bold; transition: all 0.3s; }
+        a:hover { background: #28a745; color: white; transform: translateX(5px); }
+        .no-match { text-align: center; padding: 40px; background: #fff3cd; border-radius: 10px; border-left: 5px solid #ffc107; }
+        .footer { text-align: center; margin-top: 40px; padding: 20px; background: #343a40; color: white; border-radius: 10px; }
+        @media (max-width: 600px) { .search-box { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🔧 James W.G.A.I.L Repair Lookup</h1>
+        <p>Enter appliance make & model for circuit diagrams, manuals & detailed repair guides/videos (Top UK models)</p>
+    </header>
+
+    <div class="search-box">
+        <input id="search" type="text" placeholder="e.g., Hotpoint WMSD 7103 B, Beko CFD3414S, Bosch SMS6EDI02G" onkeypress="if(event.key==='Enter') search()">
+        <button onclick="search()">🔍 Search</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const resources = {
+            // Fridges
+            'Beko CFD3414S': { 
+                diagram: 'https://www.schematicsunlimited.com/search?search=Beko+CFD3414S', 
+                manual: 'https://www.beko.co.uk/support/manuals?model=CFD3414S', 
+                repair: 'https://www.whitegoodshelp.co.uk/fridge-freezer-repair/' 
+            },
+            'Hotpoint FF175BP': { 
+                diagram: 'https://www.whitegoodshelp.co.uk/wiring-diagrams-repair-manuals/', 
+                manual: 'https://www.hotpoint.co.uk/service/appliance-manuals?model=FF175BP', 
+                repair: 'https://www.whitegoodshelp.co.uk/fridge-freezer-repair/' 
+            },
+
+            // Washing Machines
+            'Hotpoint WMSD 7103 B': { 
+                diagram: 'https://www.scribd.com/document/704512141/Hotpoint-WM73-wiring-diagram', 
+                manual: 'https://www.hotpoint.co.uk/service/appliance-manuals?model=WMSD+7103+B', 
+                repair: 'https://www.youtube.com/watch?v=ciGBLtG2KSM'  // Error codes & diagnostics video
+            },
+            'Beko WTL84121W': { 
+                diagram: 'https://www.schematicsunlimited.com/search?search=Beko+WTL', 
+                manual: 'https://www.beko.co.uk/support/manuals?model=WTL84121W', 
+                repair: 'https://www.whitegoodshelp.co.uk/washing-machine-repair/' 
+            },
+
+            // Dryers
+            'Hotpoint Aquarius NT119X': { 
+                diagram: 'https://www.schematicsunlimited.com/search?search=Hotpoint+Aquarius', 
+                manual: 'https://www.hotpoint.co.uk/service/appliance-manuals?model=NT119X', 
+                repair: 'https://www.repairclinic.com/RepairHelp/Dryer-Repair/8-95--/Hotpoint-Dryer-Troubleshooting' 
+            },
+            'Beko DRCS742': { 
+                diagram: 'https://www.schematicsunlimited.com/search?search=Beko+DRCS', 
+                manual: 'https://storage.beko.co.uk/bekoupload/manuals/DRCS76.pdf', 
+                repair: 'https://www.whitegoodshelp.co.uk/tumble-dryer-repair/' 
+            },
+
+            // Dishwashers
+            'Bosch SMS6EDI02G': { 
+                diagram: 'https://www.scribd.com/document/484676764/292156383-bosch-dishwasher-service-training-manual-Part29', 
+                manual: 'https://media3.bosch-home.com/Documents/9001937175_A.pdf', 
+                repair: 'https://www.ifixit.com/Wiki/Bosch_Dishwasher' 
+            },
+            'Hotpoint HFC 3C19 C': { 
+                diagram: 'https://www.hotpoint.co.uk/wiring-diagram-j00649722/p', 
+                manual: 'https://www.hotpoint.co.uk/service/appliance-manuals?model=HFC+3C19+C', 
+                repair: 'https://www.hotpoint.co.uk/service/washing-machine-repair/troubleshooting'  // Adapted for dishwasher
+            },
+
+            'default': {
+                diagram: 'https://www.schematicsunlimited.com', 
+                manual: 'https://www.whitegoodshelp.co.uk/wiring-diagrams-repair-manuals/', 
+                repair: 'https://www.whitegoodshelp.co.uk/washing-machine-repair/' 
+            }
+        };
+
+        function search() {
+            const query = document.getElementById('search').value.trim().toUpperCase();
+            const resultsDiv = document.getElementById('results');
+
+            if (!query) {
+                resultsDiv.innerHTML = '<div class="no-match">Enter a make & model to search!</div>';
+                return;
+            }
+
+            let html = '';
+            let found = false;
+
+            for (let key in resources) {
+                if (key !== 'default' && key.toUpperCase().includes(query.toUpperCase())) {
+                    const res = resources[key];
+                    html += `
+                        <div class="result">
+                            <h4>${key}</h4>
+                            <div class="link-group">
+                                <a href="${res.diagram}" target="_blank">📐 Circuit Diagram</a>
+                                <a href="${res.manual}" target="_blank">📖 User Manual</a>
+                                <a href="${res.repair}" target="_blank">🛠️ Repair Guide / Video</a>
+                            </div>
+                            <small>Citations: Diagrams [web:81], Guides [web:122][web:128]</small>
+                        </div>
+                    `;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                const def = resources['default'];
+                html = `
+                    <div class="no-match">
+                        <h4>No Exact Match for "${query}"</h4>
+                        <p>Quick fault finding for common issues:</p>
+                        <div class="link-group">
+                            <a href="${def.diagram}" target="_blank">📐 All Diagrams</a>
+                            <a href="${def.manual}" target="_blank">📖 Manuals Archive</a>
+                            <a href="${def.repair}" target="_blank">🛠️ Washing Machine Faults (universal)</a>
+                            <a href="https://www.whitegoodshelp.co.uk/tumble-dryer-repair/" target="_blank">Dryer Faults</a>
+                            <a href="https://www.hotpoint.co.uk/service/washing-machine-repair/troubleshooting" target="_blank">Hotpoint Troubleshooting</a>
+                        </div>
+                    </div>
+                `;
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Example load
+        window.onload = () => {
+            document.getElementById('search').value = 'Hotpoint WMSD 7103 B';
+            search();
+        };
+    </script>
+
+    <footer class="footer">
+        <p>James W.G.A.I.L | Burton upon Trent | Appliance Engineer | © 2026 James W.G.A.I.L</p>
+    </footer>
+</body>
+</html>
